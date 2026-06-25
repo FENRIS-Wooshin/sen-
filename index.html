@@ -1,223 +1,354 @@
-
 <!DOCTYPE html>
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>센스쿨 | Sens School</title>
+    <title>매칭형 2인용 체스</title>
     <style>
-        /* 기본 스타일 초기화 */
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
+            font-family: 'Pretendard', -apple-system, sans-serif;
         }
 
         body {
-            background-color: #f8f9fa;
-            color: #212529;
-            line-height: 1.6;
+            background-color: #1e1b4b;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
         }
 
-        /* 헤더 스타일 */
-        header {
-            background-color: #ffffff;
-            border-bottom: 1px solid #e9ecef;
-            position: sticky;
-            top: 0;
+        /* 매칭 화면 UI */
+        #match-screen {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(30, 27, 75, 0.95);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
             z-index: 100;
         }
 
-        .nav-container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .logo {
+        .play-btn {
+            padding: 16px 40px;
             font-size: 24px;
-            font-weight: 800;
-            color: #4f46e5;
-            text-decoration: none;
-            letter-spacing: -1px;
-        }
-
-        /* 히어로 섹션 */
-        .hero {
-            background: linear-gradient(135deg, #e0e7ff 0%, #ffffff 100%);
-            padding: 100px 20px;
-            text-align: center;
-        }
-
-        .hero h1 {
-            font-size: 48px;
-            font-weight: 800;
-            margin-bottom: 20px;
-            color: #1e1b4b;
-            letter-spacing: -1px;
-        }
-
-        .hero p {
-            font-size: 18px;
-            color: #4f46e5;
-            font-weight: 600;
-            margin-bottom: 40px;
-        }
-
-        /* 클래스 섹션 */
-        .main-container {
-            max-width: 1200px;
-            margin: 60px auto;
-            padding: 0 20px;
-        }
-
-        .section-title {
-            font-size: 28px;
-            font-weight: 700;
-            margin-bottom: 30px;
-            text-align: center;
-        }
-
-        .card-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 30px;
-        }
-
-        .card {
-            background: white;
-            border-radius: 16px;
-            overflow: hidden;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-            transition: transform 0.2s;
-            border: 1px solid #e5e7eb;
-        }
-
-        .card:hover {
-            transform: translateY(-5px);
-        }
-
-        .card-content {
-            padding: 24px;
-        }
-
-        .badge {
-            display: inline-block;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 600;
-            margin-bottom: 12px;
-        }
-
-        .badge.lifestyle { background-color: #fee2e2; color: #ef4444; }
-        .badge.business { background-color: #dbeafe; color: #3b82f6; }
-        .badge.healing { background-color: #dcfce7; color: #22c55e; }
-
-        .card-title {
-            font-size: 20px;
-            font-weight: 700;
-            margin-bottom: 16px;
-            color: #111827;
-        }
-
-        .btn {
-            display: block;
-            width: 100%;
-            padding: 12px;
+            font-weight: bold;
             background-color: #4f46e5;
             color: white;
             border: none;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: 600;
+            border-radius: 12px;
             cursor: pointer;
-            text-align: center;
-            transition: background-color 0.2s;
+            transition: all 0.2s;
         }
 
-        .btn:hover {
-            background-color: #4338ca;
+        .play-btn:hover { background-color: #4338ca; transform: scale(1.05); }
+        .match-status { margin-top: 20px; font-size: 18px; color: #a5b4fc; }
+
+        /* 게임 화면 UI */
+        #game-screen {
+            display: none;
+            flex-direction: column;
+            align-items: center;
         }
 
-        /* 푸터 */
-        footer {
-            background-color: #1f2937;
-            color: #9ca3af;
-            text-align: center;
-            padding: 40px 20px;
-            margin-top: 100px;
-            font-size: 14px;
+        .status {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            color: #c7d2fe;
         }
+
+        .board {
+            display: grid;
+            grid-template-columns: repeat(8, minvw(40px, 60px));
+            grid-template-rows: repeat(8, minvw(40px, 60px));
+            border: 4px solid #312e81;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+        }
+
+        @media (min-width: 600px) {
+            .board {
+                grid-template-columns: repeat(8, 60px);
+                grid-template-rows: repeat(8, 60px);
+            }
+        }
+
+        .cell {
+            width: 100%; height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 36px;
+            cursor: pointer;
+            position: relative;
+            user-select: none;
+        }
+
+        .cell.light { background-color: #f3f4f6; }
+        .cell.dark { background-color: #9ca3af; }
+
+        /* 초록색 이동 가능 표시기 */
+        .valid-move::after {
+            content: '';
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background-color: rgba(34, 197, 94, 0.7); /* 초록색 */
+            border-radius: 50%;
+            pointer-events: none;
+        }
+        
+        .valid-move.has-enemy::after {
+            width: 100%; height: 100%;
+            border-radius: 0;
+            background-color: rgba(239, 68, 68, 0.5); /* 적이 있으면 붉은색 표시 */
+        }
+
+        .cell.selected {
+            background-color: rgba(234, 179, 8, 0.5) !important; /* 선택된 말 노란색 표시 */
+        }
+
+        .piece.white { color: #ffffff; text-shadow: 0 1px 2px #000; }
+        .piece.black { color: #000000; text-shadow: 0 1px 1px #fff; }
+
     </style>
 </head>
 <body>
 
-    <header>
-        <div class="nav-container">
-            <a href="#" class="logo">SENS SCHOOL</a>
-        </div>
-    </header>
+    <div id="match-screen">
+        <h1 style="margin-bottom: 40px; font-size: 3rem;">CHESS BATTLE</h1>
+        <button class="play-btn" id="play-btn" onclick="startMatching()">플레이</button>
+        <div class="match-status" id="match-status"></div>
+    </div>
 
-    <section class="hero">
-        <h1>당신의 일상에 센스를 더하다</h1>
-        <p>책에서는 가르쳐주지 않는 인생의 감각을 깨우는 공간, 센스쿨</p>
-    </section>
-
-    <main class="main-container">
-        <h2 class="section-title">지금 열려있는 센스쿨 클래스</h2>
-        
-        <div class="card-grid">
-            <div class="card">
-                <div class="card-content">
-                    <span class="badge lifestyle">라이프스타일</span>
-                    <h3 class="card-title">어색함을 깨는 대화 & 유머 센스</h3>
-                    <button class="btn" onclick="registerClass('어색함을 깨는 대화 & 유머 센스')">수강 신청하기</button>
-                </div>
-            </div>
-
-            <div class="card">
-                <div class="card-content">
-                    <span class="badge business">비즈니스</span>
-                    <h3 class="card-title">트렌드를 읽는 마케팅 감각</h3>
-                    <button class="btn" onclick="registerClass('트렌드를 읽는 마케팅 감각')">수강 신청하기</button>
-                </div>
-            </div>
-
-            <div class="card">
-                <div class="card-content">
-                    <span class="badge healing">오감 힐링</span>
-                    <h3 class="card-title">나만의 향을 찾는 조향 클래스</h3>
-                    <button class="btn" onclick="registerClass('나만의 향을 찾는 조향 클래스')">수강 신청하기</button>
-                </div>
-            </div>
-        </div>
-    </main>
-
-    <footer>
-        <p>&copy; 2026 SENS SCHOOL. All rights reserved.</p>
-    </footer>
+    <div id="game-screen">
+        <div class="status" id="status-text">백(White)의 차례입니다</div>
+        <div class="board" id="board"></div>
+    </div>
 
     <script>
-        function registerClass(className) {
-            const name = prompt("수강 신청을 위해 이름을 입력해주세요:");
-            if (name) {
-                alert(`🎉 축하합니다!\n${name}님의 [${className}] 수강 신청이 완료되었습니다.`);
-                
-                /* // 향후 Node.js HTTP 서버와 연동할 때 사용할 코드 예시:
-                fetch('/api/register', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ studentName: name, className: className })
-                })
-                .then(res => res.json())
-                .then(data => alert(data.message));
-                */
+        // --- 1. 매칭 시스템 (프론트엔드 가짜 매칭 UI) ---
+        function startMatching() {
+            const btn = document.getElementById('play-btn');
+            const status = document.getElementById('match-status');
+            
+            btn.style.display = 'none';
+            status.innerText = "상대방을 기다리는 중... (로컬 2인 매칭)";
+            
+            // 2초 뒤 매칭 성사 연출
+            setTimeout(() => {
+                status.style.color = '#4ade80';
+                status.innerText = "매칭 완료! 게임을 시작합니다.";
+                setTimeout(() => {
+                    document.getElementById('match-screen').style.display = 'none';
+                    document.getElementById('game-screen').style.display = 'flex';
+                    initBoard();
+                }, 1500);
+            }, 2000);
+        }
+
+        // --- 2. 체스 게임 로직 ---
+        const boardEl = document.getElementById('board');
+        const statusText = document.getElementById('status-text');
+        
+        let boardState = [];
+        let currentTurn = 'white';
+        let selectedCell = null;
+        let validMoves = [];
+
+        // 기물 기본 셋업
+        const initialSetup = [
+            ['r', 'n', 'b', 'q', 'k', 'b', 'n', 'r'], // Black
+            ['p', 'p', 'p', 'p', 'p', 'p', 'p', 'p'],
+            ['', '', '', '', '', '', '', ''],
+            ['', '', '', '', '', '', '', ''],
+            ['', '', '', '', '', '', '', ''],
+            ['', '', '', '', '', '', '', ''],
+            ['P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'], // White
+            ['R', 'N', 'B', 'Q', 'K', 'B', 'N', 'R']
+        ];
+
+        const symbols = {
+            'K': '♔', 'Q': '♕', 'R': '♖', 'B': '♗', 'N': '♘', 'P': '♙',
+            'k': '♚', 'q': '♛', 'r': '♜', 'b': '♝', 'n': '♞', 'p': '♟'
+        };
+
+        function initBoard() {
+            boardEl.innerHTML = '';
+            boardState = JSON.parse(JSON.stringify(initialSetup));
+            currentTurn = 'white';
+            selectedCell = null;
+            updateStatus();
+            renderBoard();
+        }
+
+        function renderBoard() {
+            boardEl.innerHTML = '';
+            for (let r = 0; r < 8; r++) {
+                for (let c = 0; c < 8; c++) {
+                    const cell = document.createElement('div');
+                    const isLight = (r + c) % 2 === 0;
+                    cell.className = `cell ${isLight ? 'light' : 'dark'}`;
+                    cell.dataset.r = r;
+                    cell.dataset.c = c;
+                    
+                    const piece = boardState[r][c];
+                    if (piece) {
+                        const span = document.createElement('span');
+                        span.className = `piece ${piece === piece.toUpperCase() ? 'white' : 'black'}`;
+                        span.innerText = symbols[piece];
+                        cell.appendChild(span);
+                    }
+
+                    // 선택된 셀 하이라이트
+                    if (selectedCell && selectedCell.r === r && selectedCell.c === c) {
+                        cell.classList.add('selected');
+                    }
+
+                    // 이동 가능 구역 초록색 표시
+                    const move = validMoves.find(m => m.r === r && m.c === c);
+                    if (move) {
+                        cell.classList.add('valid-move');
+                        if (move.hasEnemy) cell.classList.add('has-enemy');
+                    }
+
+                    cell.addEventListener('click', () => handleCellClick(r, c));
+                    boardEl.appendChild(cell);
+                }
             }
+        }
+
+        function handleCellClick(r, c) {
+            const piece = boardState[r][c];
+            const isWhitePiece = piece && piece === piece.toUpperCase();
+            const pieceColor = isWhitePiece ? 'white' : 'black';
+
+            // 1. 이미 내 기물이 선택된 상태에서 초록색 이동 가능 칸을 클릭했을 때 (이동)
+            if (selectedCell && validMoves.find(m => m.r === r && m.c === c)) {
+                executeMove(selectedCell, {r, c});
+                return;
+            }
+
+            // 2. 내 차례인 내 기물을 클릭했을 때 (선택 및 초록색 경로 표시)
+            if (piece && pieceColor === currentTurn) {
+                // 같은 기물을 다시 누르면 선택 취소 (초록색 사라짐)
+                if (selectedCell && selectedCell.r === r && selectedCell.c === c) {
+                    selectedCell = null;
+                    validMoves = [];
+                } else {
+                    selectedCell = {r, c, piece};
+                    validMoves = calculateValidMoves(r, c, piece);
+                }
+                renderBoard();
+            } else {
+                // 빈 칸이나 상대 기물을 잘못 눌렀을 때 선택 취소
+                selectedCell = null;
+                validMoves = [];
+                renderBoard();
+            }
+        }
+
+        function executeMove(from, to) {
+            const targetPiece = boardState[to.r][to.c];
+            
+            // 이동 적용
+            boardState[to.r][to.c] = from.piece;
+            boardState[from.r][from.c] = '';
+            
+            selectedCell = null;
+            validMoves = [];
+
+            // 킹 잡았는지 확인
+            if (targetPiece.toLowerCase() === 'k') {
+                renderBoard();
+                setTimeout(() => {
+                    alert(`🎉 게임 종료! ${currentTurn === 'white' ? '백(White)' : '흑(Black)'} 승리! (킹 포획)`);
+                    document.getElementById('match-screen').style.display = 'flex';
+                    document.getElementById('game-screen').style.display = 'none';
+                    document.getElementById('play-btn').style.display = 'block';
+                    document.getElementById('play-btn').innerText = "다시 매칭하기";
+                    document.getElementById('match-status').innerText = "";
+                }, 100);
+                return;
+            }
+
+            // 턴 넘기기
+            currentTurn = currentTurn === 'white' ? 'black' : 'white';
+            updateStatus();
+            renderBoard();
+        }
+
+        function updateStatus() {
+            statusText.innerText = currentTurn === 'white' ? '백(White)의 차례입니다' : '흑(Black)의 차례입니다';
+            statusText.style.color = currentTurn === 'white' ? '#ffffff' : '#000000';
+            statusText.style.textShadow = currentTurn === 'black' ? '0 0 10px #fff' : 'none';
+        }
+
+        // --- 기물별 이동 가능 경로 계산 로직 ---
+        function calculateValidMoves(r, c, piece) {
+            let moves = [];
+            const type = piece.toLowerCase();
+            const color = piece === piece.toUpperCase() ? 'white' : 'black';
+            const dir = color === 'white' ? -1 : 1; // 폰 이동 방향
+
+            const addIfValid = (nr, nc, attackOnly = false, moveOnly = false) => {
+                if (nr < 0 || nr > 7 || nc < 0 || nc > 7) return false; // 맵 밖
+                const target = boardState[nr][nc];
+                if (!target) {
+                    if (!attackOnly) moves.push({r: nr, c: nc, hasEnemy: false});
+                    return true; // 계속 전진 가능 (룩, 비숍 등)
+                }
+                const targetColor = target === target.toUpperCase() ? 'white' : 'black';
+                if (targetColor !== color) {
+                    if (!moveOnly) moves.push({r: nr, c: nc, hasEnemy: true});
+                }
+                return false; // 기물에 막힘
+            };
+
+            const slide = (dr, dc) => {
+                let nr = r + dr, nc = c + dc;
+                while (addIfValid(nr, nc)) { nr += dr; nc += dc; }
+            };
+
+            if (type === 'p') {
+                // 폰 앞으로 (비어있을 때만)
+                if (addIfValid(r + dir, c, false, true)) {
+                    // 첫 이동 2칸 (기본 룰)
+                    if ((color === 'white' && r === 6) || (color === 'black' && r === 1)) {
+                        addIfValid(r + dir * 2, c, false, true);
+                    }
+                }
+                // 폰 대각선 공격
+                addIfValid(r + dir, c - 1, true);
+                addIfValid(r + dir, c + 1, true);
+            } 
+            else if (type === 'n') {
+                // 나이트
+                const jumps = [[-2,-1],[-2,1],[-1,-2],[-1,2],[1,-2],[1,2],[2,-1],[2,1]];
+                jumps.forEach(j => addIfValid(r + j[0], c + j[1]));
+            }
+            else if (type === 'k') {
+                // 킹
+                const steps = [[-1,-1],[-1,0],[-1,1],[0,-1],[0,1],[1,-1],[1,0],[1,1]];
+                steps.forEach(s => addIfValid(r + s[0], c + s[1]));
+            }
+            else {
+                // 룩, 비숍, 퀸
+                if (type === 'r' || type === 'q') {
+                    slide(-1, 0); slide(1, 0); slide(0, -1); slide(0, 1);
+                }
+                if (type === 'b' || type === 'q') {
+                    slide(-1, -1); slide(-1, 1); slide(1, -1); slide(1, 1);
+                }
+            }
+            return moves;
         }
     </script>
 </body>
