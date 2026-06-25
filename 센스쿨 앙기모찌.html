@@ -1,0 +1,224 @@
+
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>센스쿨 | Sens School</title>
+    <style>
+        /* 기본 스타일 초기화 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
+        }
+
+        body {
+            background-color: #f8f9fa;
+            color: #212529;
+            line-height: 1.6;
+        }
+
+        /* 헤더 스타일 */
+        header {
+            background-color: #ffffff;
+            border-bottom: 1px solid #e9ecef;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: 800;
+            color: #4f46e5;
+            text-decoration: none;
+            letter-spacing: -1px;
+        }
+
+        /* 히어로 섹션 */
+        .hero {
+            background: linear-gradient(135deg, #e0e7ff 0%, #ffffff 100%);
+            padding: 100px 20px;
+            text-align: center;
+        }
+
+        .hero h1 {
+            font-size: 48px;
+            font-weight: 800;
+            margin-bottom: 20px;
+            color: #1e1b4b;
+            letter-spacing: -1px;
+        }
+
+        .hero p {
+            font-size: 18px;
+            color: #4f46e5;
+            font-weight: 600;
+            margin-bottom: 40px;
+        }
+
+        /* 클래스 섹션 */
+        .main-container {
+            max-width: 1200px;
+            margin: 60px auto;
+            padding: 0 20px;
+        }
+
+        .section-title {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s;
+            border: 1px solid #e5e7eb;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+        }
+
+        .card-content {
+            padding: 24px;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+
+        .badge.lifestyle { background-color: #fee2e2; color: #ef4444; }
+        .badge.business { background-color: #dbeafe; color: #3b82f6; }
+        .badge.healing { background-color: #dcfce7; color: #22c55e; }
+
+        .card-title {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            color: #111827;
+        }
+
+        .btn {
+            display: block;
+            width: 100%;
+            padding: 12px;
+            background-color: #4f46e5;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            text-align: center;
+            transition: background-color 0.2s;
+        }
+
+        .btn:hover {
+            background-color: #4338ca;
+        }
+
+        /* 푸터 */
+        footer {
+            background-color: #1f2937;
+            color: #9ca3af;
+            text-align: center;
+            padding: 40px 20px;
+            margin-top: 100px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="nav-container">
+            <a href="#" class="logo">SENS SCHOOL</a>
+        </div>
+    </header>
+
+    <section class="hero">
+        <h1>당신의 일상에 센스를 더하다</h1>
+        <p>책에서는 가르쳐주지 않는 인생의 감각을 깨우는 공간, 센스쿨</p>
+    </section>
+
+    <main class="main-container">
+        <h2 class="section-title">지금 열려있는 센스쿨 클래스</h2>
+        
+        <div class="card-grid">
+            <div class="card">
+                <div class="card-content">
+                    <span class="badge lifestyle">라이프스타일</span>
+                    <h3 class="card-title">어색함을 깨는 대화 & 유머 센스</h3>
+                    <button class="btn" onclick="registerClass('어색함을 깨는 대화 & 유머 센스')">수강 신청하기</button>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-content">
+                    <span class="badge business">비즈니스</span>
+                    <h3 class="card-title">트렌드를 읽는 마케팅 감각</h3>
+                    <button class="btn" onclick="registerClass('트렌드를 읽는 마케팅 감각')">수강 신청하기</button>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-content">
+                    <span class="badge healing">오감 힐링</span>
+                    <h3 class="card-title">나만의 향을 찾는 조향 클래스</h3>
+                    <button class="btn" onclick="registerClass('나만의 향을 찾는 조향 클래스')">수강 신청하기</button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <p>&copy; 2026 SENS SCHOOL. All rights reserved.</p>
+    </footer>
+
+    <script>
+        function registerClass(className) {
+            const name = prompt("수강 신청을 위해 이름을 입력해주세요:");
+            if (name) {
+                alert(`🎉 축하합니다!\n${name}님의 [${className}] 수강 신청이 완료되었습니다.`);
+                
+                /* // 향후 Node.js HTTP 서버와 연동할 때 사용할 코드 예시:
+                fetch('/api/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ studentName: name, className: className })
+                })
+                .then(res => res.json())
+                .then(data => alert(data.message));
+                */
+            }
+        }
+    </script>
+</body>
+</html>
