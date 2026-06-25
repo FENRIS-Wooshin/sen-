@@ -1,355 +1,510 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>매칭형 2인용 체스</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Pretendard', -apple-system, sans-serif;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>매칭형 2인용 체스 - Ultimate</title>
+<style>
+/* --- 기본 초기화 및 폰트 --- */
+* { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Pretendard', -apple-system, sans-serif; }
 
-        body {
-            background-color: #1e1b4b;
-            color: white;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-        }
+/* --- 화려한 애니메이션 배경 --- */
+body {
+background: linear-gradient(-45deg, #0f0c29, #302b63, #24243e, #141e30);
+background-size: 400% 400%;
+animation: gradientBG 15s ease infinite;
+color: white;
+display: flex;
+align-items: center;
+justify-content: center;
+min-height: 100vh;
+overflow: hidden;
+}
 
-        /* 매칭 화면 UI */
-        #match-screen {
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background-color: rgba(30, 27, 75, 0.95);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            z-index: 100;
-        }
+@keyframes gradientBG {
+0% { background-position: 0% 50%; }
+50% { background-position: 100% 50%; }
+100% { background-position: 0% 50%; }
+}
 
-        .play-btn {
-            padding: 16px 40px;
-            font-size: 24px;
-            font-weight: bold;
-            background-color: #4f46e5;
-            color: white;
-            border: none;
-            border-radius: 12px;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
+/* --- 매칭 화면 UI --- */
+#match-screen {
+position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+background: rgba(15, 12, 41, 0.8);
+backdrop-filter: blur(10px);
+display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100;
+}
 
-        .play-btn:hover { background-color: #4338ca; transform: scale(1.05); }
-        .match-status { margin-top: 20px; font-size: 18px; color: #a5b4fc; }
+.play-btn {
+padding: 16px 40px; font-size: 24px; font-weight: bold;
+background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+color: white; border: none; border-radius: 30px; cursor: pointer;
+box-shadow: 0 4px 15px rgba(118, 75, 162, 0.4);
+transition: all 0.3s ease;
+}
+.play-btn:hover { transform: translateY(-3px) scale(1.05); box-shadow: 0 8px 25px rgba(118, 75, 162, 0.6); }
 
-        /* 게임 화면 UI */
-        #game-screen {
-            display: none;
-            flex-direction: column;
-            align-items: center;
-        }
+/* --- 메인 게임 레이아웃 --- */
+#game-layout {
+display: none; flex-direction: row; gap: 30px;
+max-width: 1000px; width: 100%; padding: 20px;
+align-items: flex-start; justify-content: center; flex-wrap: wrap;
+}
 
-        .status {
-            font-size: 24px;
-            font-weight: bold;
-            margin-bottom: 20px;
-            color: #c7d2fe;
-        }
+/* --- 체스 보드 영역 --- /
+.board-container {
+display: flex; flex-direction: column; align-items: center;
+perspective: 1000px; / 3D 회전 효과를 위한 원근감 */
+}
 
-        .board {
-            display: grid;
-            grid-template-columns: repeat(8, minvw(40px, 60px));
-            grid-template-rows: repeat(8, minvw(40px, 60px));
-            border: 4px solid #312e81;
-            border-radius: 8px;
-            overflow: hidden;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
-        }
+.board {
+display: grid;
+grid-template-columns: repeat(8, minvw(40px, 65px));
+grid-template-rows: repeat(8, minvw(40px, 65px));
+border: 2px solid rgba(255, 255, 255, 0.1);
+border-radius: 12px;
+overflow: hidden;
+box-shadow: 0 15px 35px rgba(0,0,0,0.6), 0 0 20px rgba(102, 126, 234, 0.3);
+background-color: #2a2a35;
+transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1); /* 부드러운 회전 애니메이션 */
+}
 
-        @media (min-width: 600px) {
-            .board {
-                grid-template-columns: repeat(8, 60px);
-                grid-template-rows: repeat(8, 60px);
-            }
-        }
+@media (min-width: 768px) {
+.board { grid-template-columns: repeat(8, 65px); grid-template-rows: repeat(8, 65px); }
+}
 
-        .cell {
-            width: 100%; height: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 36px;
-            cursor: pointer;
-            position: relative;
-            user-select: none;
-        }
+/* 흑 차례일 때 보드 회전 */
+.board.flipped { transform: rotate(180deg); box-shadow: 0 -15px 35px rgba(0,0,0,0.6), 0 0 20px rgba(102, 126, 234, 0.3); }
 
-        .cell.light { background-color: #f3f4f6; }
-        .cell.dark { background-color: #9ca3af; }
+.cell {
+width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;
+font-size: 40px; cursor: pointer; position: relative; user-select: none;
+transition: background-color 0.2s;
+}
 
-        /* 초록색 이동 가능 표시기 */
-        .valid-move::after {
-            content: '';
-            position: absolute;
-            width: 20px;
-            height: 20px;
-            background-color: rgba(34, 197, 94, 0.7); /* 초록색 */
-            border-radius: 50%;
-            pointer-events: none;
-        }
-        
-        .valid-move.has-enemy::after {
-            width: 100%; height: 100%;
-            border-radius: 0;
-            background-color: rgba(239, 68, 68, 0.5); /* 적이 있으면 붉은색 표시 */
-        }
+.cell.light { background-color: rgba(240, 240, 245, 0.9); }
+.cell.dark { background-color: rgba(118, 150, 86, 0.9); }
+.cell.last-move { background-color: rgba(255, 255, 51, 0.5) !important; }
+.cell.selected { background-color: rgba(255, 255, 51, 0.8) !important; }
 
-        .cell.selected {
-            background-color: rgba(234, 179, 8, 0.5) !important; /* 선택된 말 노란색 표시 */
-        }
+.valid-move::after {
+content: ''; position: absolute; width: 25%; height: 25%;
+background-color: rgba(0, 0, 0, 0.25); border-radius: 50%; pointer-events: none;
+}
+.valid-move.has-enemy::after {
+width: 100%; height: 100%; border-radius: 0; background-color: transparent;
+border: 5px solid rgba(0, 0, 0, 0.25); box-sizing: border-box;
+}
 
-        .piece.white { color: #ffffff; text-shadow: 0 1px 2px #000; }
-        .piece.black { color: #000000; text-shadow: 0 1px 1px #fff; }
+/* 기물 디자인 및 회전 역보정 (글자는 항상 정방향 유지) */
+.piece { display: inline-block; transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1); }
+.board.flipped .piece { transform: rotate(-180deg); }
+.piece.white { color: #ffffff; text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
+.piece.black { color: #000000; text-shadow: 0 1px 2px rgba(255,255,255,0.5); }
+.piece-pop { animation: pop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
 
-    </style>
+@keyframes pop { 0% { transform: scale(0.5); } 100% { transform: scale(1); } }
+/* 뒤집힌 상태에서의 pop 애니메이션 보정 */
+.board.flipped .piece-pop { animation: popFlipped 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+@keyframes popFlipped { 0% { transform: scale(0.5) rotate(-180deg); } 100% { transform: scale(1) rotate(-180deg); } }
+
+.capture-effect { animation: hitShake 0.3s ease-in-out; background-color: rgba(255, 50, 50, 0.8) !important; }
+@keyframes hitShake { 0%, 100% { transform: translateX(0); } 25%, 75% { transform: translateX(-3px); } 50% { transform: translateX(3px); } }
+
+/* --- 우측 상태 및 킬로그 패널 --- */
+.side-panel {
+width: 280px; background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(15px);
+border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 16px; padding: 20px;
+display: flex; flex-direction: column; box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+}
+
+.status-box { text-align: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid rgba(255, 255, 255, 0.1); }
+.turn-text { font-size: 24px; font-weight: 800; text-shadow: 0 0 10px rgba(255,255,255,0.3); transition: color 0.3s; }
+
+.log-section { margin-bottom: 15px; }
+.log-title { font-size: 14px; color: #a5b4fc; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px;}
+.graveyard { display: flex; flex-wrap: wrap; gap: 4px; font-size: 24px; min-height: 44px; background: rgba(0,0,0,0.2); padding: 8px; border-radius: 8px; }
+
+.alert-message { color: #ff4757; font-weight: bold; font-size: 18px; text-align: center; margin-top: 10px; min-height: 24px; animation: pulse 1s infinite; }
+@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+
+/* --- 프로모션 UI 모달 --- */
+#promotion-modal {
+display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+background: rgba(0, 0, 0, 0.7); z-index: 50; flex-direction: column; align-items: center; justify-content: center;
+}
+.promotion-box {
+background: #2a2a35; padding: 20px; border-radius: 12px; border: 2px solid #a5b4fc;
+display: flex; gap: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+}
+.promo-btn {
+font-size: 40px; cursor: pointer; padding: 10px; border-radius: 8px; background: rgba(255,255,255,0.1);
+border: 1px solid transparent; transition: all 0.2s;
+}
+.promo-btn:hover { background: rgba(255,255,255,0.3); border-color: #a5b4fc; transform: scale(1.1); }
+
+</style>
 </head>
 <body>
 
-    <div id="match-screen">
-        <h1 style="margin-bottom: 40px; font-size: 3rem;">CHESS BATTLE</h1>
-        <button class="play-btn" id="play-btn" onclick="startMatching()">플레이</button>
-        <div class="match-status" id="match-status"></div>
-    </div>
+<div id="match-screen">
+<h1 style="margin-bottom: 40px; font-size: 4rem; font-weight: 900; letter-spacing: 2px; text-shadow: 0 0 20px rgba(102, 126, 234, 0.8);">CHESS BATTLE</h1>
+<button class="play-btn" id="play-btn" onclick="startMatching()">게임 시작</button>
+<div id="match-status" style="margin-top: 20px; font-size: 18px; color: #cbd5e1;"></div>
+</div>
 
-    <div id="game-screen">
-        <div class="status" id="status-text">백(White)의 차례입니다</div>
-        <div class="board" id="board"></div>
-    </div>
+<div id="game-layout">
+<div class="board-container">
+<div class="board" id="board"></div>
+</div>
 
-    <script>
-        // --- 1. 매칭 시스템 (프론트엔드 가짜 매칭 UI) ---
-        function startMatching() {
-            const btn = document.getElementById('play-btn');
-            const status = document.getElementById('match-status');
-            
-            btn.style.display = 'none';
-            status.innerText = "상대방을 기다리는 중... (로컬 2인 매칭)";
-            
-            // 2초 뒤 매칭 성사 연출
-            setTimeout(() => {
-                status.style.color = '#4ade80';
-                status.innerText = "매칭 완료! 게임을 시작합니다.";
-                setTimeout(() => {
-                    document.getElementById('match-screen').style.display = 'none';
-                    document.getElementById('game-screen').style.display = 'flex';
-                    initBoard();
-                }, 1500);
-            }, 2000);
-        }
+<div class="side-panel">
+<div class="status-box">
+<div class="turn-text" id="status-text">백(White) 차례</div>
+<div class="alert-message" id="alert-message"></div>
+</div>
 
-        // --- 2. 체스 게임 로직 ---
-        const boardEl = document.getElementById('board');
-        const statusText = document.getElementById('status-text');
-        
-        let boardState = [];
-        let currentTurn = 'white';
-        let selectedCell = null;
-        let validMoves = [];
+<div class="log-section">
+<div class="log-title">백이 잡은 말 (White's Kills)</div>
+<div class="graveyard" id="white-graveyard"></div>
+</div>
 
-        // 기물 기본 셋업
-        const initialSetup = [
-            ['r', 'n', 'b', 'q', 'k', 'b', 'n', 'r'], // Black
-            ['p', 'p', 'p', 'p', 'p', 'p', 'p', 'p'],
-            ['', '', '', '', '', '', '', ''],
-            ['', '', '', '', '', '', '', ''],
-            ['', '', '', '', '', '', '', ''],
-            ['', '', '', '', '', '', '', ''],
-            ['P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'], // White
-            ['R', 'N', 'B', 'Q', 'K', 'B', 'N', 'R']
-        ];
+<div class="log-section">
+<div class="log-title">흑이 잡은 말 (Black's Kills)</div>
+<div class="graveyard" id="black-graveyard"></div>
+</div>
+</div>
+</div>
 
-        const symbols = {
-            'K': '♔', 'Q': '♕', 'R': '♖', 'B': '♗', 'N': '♘', 'P': '♙',
-            'k': '♚', 'q': '♛', 'r': '♜', 'b': '♝', 'n': '♞', 'p': '♟'
-        };
+<div id="promotion-modal">
+<h2 style="margin-bottom: 20px; color: white;">승급할 기물을 선택하세요</h2>
+<div class="promotion-box" id="promotion-options">
+</div>
+</div>
 
-        function initBoard() {
-            boardEl.innerHTML = '';
-            boardState = JSON.parse(JSON.stringify(initialSetup));
-            currentTurn = 'white';
-            selectedCell = null;
-            updateStatus();
-            renderBoard();
-        }
+<script>
+// --- 매칭 시스템 ---
+function startMatching() {
+document.getElementById('play-btn').style.display = 'none';
+const status = document.getElementById('match-status');
+status.innerText = "상대방을 기다리는 중... (로컬 2인)";
+setTimeout(() => {
+status.style.color = '#4ade80'; status.innerText = "매칭 완료!";
+setTimeout(() => {
+document.getElementById('match-screen').style.display = 'none';
+document.getElementById('game-layout').style.display = 'flex';
+initGame();
+}, 1000);
+}, 1500);
+}
 
-        function renderBoard() {
-            boardEl.innerHTML = '';
-            for (let r = 0; r < 8; r++) {
-                for (let c = 0; c < 8; c++) {
-                    const cell = document.createElement('div');
-                    const isLight = (r + c) % 2 === 0;
-                    cell.className = `cell ${isLight ? 'light' : 'dark'}`;
-                    cell.dataset.r = r;
-                    cell.dataset.c = c;
-                    
-                    const piece = boardState[r][c];
-                    if (piece) {
-                        const span = document.createElement('span');
-                        span.className = `piece ${piece === piece.toUpperCase() ? 'white' : 'black'}`;
-                        span.innerText = symbols[piece];
-                        cell.appendChild(span);
-                    }
+// --- 체스 엔진 변수 ---
+const symbols = { 'K': '♔', 'Q': '♕', 'R': '♖', 'B': '♗', 'N': '♘', 'P': '♙', 'k': '♚', 'q': '♛', 'r': '♜', 'b': '♝', 'n': '♞', 'p': '♟' };
 
-                    // 선택된 셀 하이라이트
-                    if (selectedCell && selectedCell.r === r && selectedCell.c === c) {
-                        cell.classList.add('selected');
-                    }
+let board = [];
+let currentTurn = 'white';
+let isGameOver = false; // 게임 오버 상태 변수 추가
+let selectedCell = null;
+let validMoves = [];
+let lastMove = null;
+let capturedByWhite = [];
+let capturedByBlack = [];
+let effectCell = null;
+let pendingPromotion = null; // 프로모션 대기 상태
 
-                    // 이동 가능 구역 초록색 표시
-                    const move = validMoves.find(m => m.r === r && m.c === c);
-                    if (move) {
-                        cell.classList.add('valid-move');
-                        if (move.hasEnemy) cell.classList.add('has-enemy');
-                    }
+const initLayout = [
+['r','n','b','q','k','b','n','r'],
+['p','p','p','p','p','p','p','p'],
+['','','','','','','',''],
+['','','','','','','',''],
+['','','','','','','',''],
+['','','','','','','',''],
+['P','P','P','P','P','P','P','P'],
+['R','N','B','Q','K','B','N','R']
+];
 
-                    cell.addEventListener('click', () => handleCellClick(r, c));
-                    boardEl.appendChild(cell);
-                }
-            }
-        }
+function initGame() {
+board = [];
+for(let r=0; r<8; r++) {
+board[r] = [];
+for(let c=0; c<8; c++) {
+const char = initLayout[r][c];
+if(char) {
+board[r][c] = { type: char.toLowerCase(), color: char === char.toUpperCase() ? 'white' : 'black', char: char, hasMoved: false };
+} else { board[r][c] = null; }
+}
+}
+currentTurn = 'white'; isGameOver = false; selectedCell = null; lastMove = null;
+capturedByWhite = []; capturedByBlack = []; effectCell = null; pendingPromotion = null;
+document.getElementById('alert-message').innerText = "";
+document.getElementById('board').classList.remove('flipped');
+updateUI();
+}
 
-        function handleCellClick(r, c) {
-            const piece = boardState[r][c];
-            const isWhitePiece = piece && piece === piece.toUpperCase();
-            const pieceColor = isWhitePiece ? 'white' : 'black';
+function updateUI() {
+const boardEl = document.getElementById('board');
+boardEl.innerHTML = '';
 
-            // 1. 이미 내 기물이 선택된 상태에서 초록색 이동 가능 칸을 클릭했을 때 (이동)
-            if (selectedCell && validMoves.find(m => m.r === r && m.c === c)) {
-                executeMove(selectedCell, {r, c});
-                return;
-            }
+// 시점 자동 반전 (흑 차례일 때 보드를 돌림)
+if (currentTurn === 'black') boardEl.classList.add('flipped');
+else boardEl.classList.remove('flipped');
 
-            // 2. 내 차례인 내 기물을 클릭했을 때 (선택 및 초록색 경로 표시)
-            if (piece && pieceColor === currentTurn) {
-                // 같은 기물을 다시 누르면 선택 취소 (초록색 사라짐)
-                if (selectedCell && selectedCell.r === r && selectedCell.c === c) {
-                    selectedCell = null;
-                    validMoves = [];
-                } else {
-                    selectedCell = {r, c, piece};
-                    validMoves = calculateValidMoves(r, c, piece);
-                }
-                renderBoard();
-            } else {
-                // 빈 칸이나 상대 기물을 잘못 눌렀을 때 선택 취소
-                selectedCell = null;
-                validMoves = [];
-                renderBoard();
-            }
-        }
+for (let r = 0; r < 8; r++) {
+for (let c = 0; c < 8; c++) {
+const cell = document.createElement('div');
+cell.className = cell ${(r + c) % 2 === 0 ? 'light' : 'dark'}`;
 
-        function executeMove(from, to) {
-            const targetPiece = boardState[to.r][to.c];
-            
-            // 이동 적용
-            boardState[to.r][to.c] = from.piece;
-            boardState[from.r][from.c] = '';
-            
-            selectedCell = null;
-            validMoves = [];
+if (lastMove && ((lastMove.from.r === r && lastMove.from.c === c) || (lastMove.to.r === r && lastMove.to.c === c)))
+cell.classList.add('last-move');
+if (effectCell && effectCell.r === r && effectCell.c === c)
+cell.classList.add('capture-effect');
+if (selectedCell && selectedCell.r === r && selectedCell.c === c)
+cell.classList.add('selected');
 
-            // 킹 잡았는지 확인
-            if (targetPiece.toLowerCase() === 'k') {
-                renderBoard();
-                setTimeout(() => {
-                    alert(`🎉 게임 종료! ${currentTurn === 'white' ? '백(White)' : '흑(Black)'} 승리! (킹 포획)`);
-                    document.getElementById('match-screen').style.display = 'flex';
-                    document.getElementById('game-screen').style.display = 'none';
-                    document.getElementById('play-btn').style.display = 'block';
-                    document.getElementById('play-btn').innerText = "다시 매칭하기";
-                    document.getElementById('match-status').innerText = "";
-                }, 100);
-                return;
-            }
+const move = validMoves.find(m => m.r === r && m.c === c);
+if (move) {
+cell.classList.add('valid-move');
+if (move.capture) cell.classList.add('has-enemy');
+}
 
-            // 턴 넘기기
-            currentTurn = currentTurn === 'white' ? 'black' : 'white';
-            updateStatus();
-            renderBoard();
-        }
+const piece = board[r][c];
+if (piece) {
+const span = document.createElement('span');
+span.className = piece${piece.color}`;
+span.innerText = symbols[piece.char];
+if (lastMove && lastMove.to.r === r && lastMove.to.c === c) span.classList.add('piece-pop');
+cell.appendChild(span);
+}
+cell.onclick = () => handleCellClick(r, c);
+boardEl.appendChild(cell);
+}
+}
 
-        function updateStatus() {
-            statusText.innerText = currentTurn === 'white' ? '백(White)의 차례입니다' : '흑(Black)의 차례입니다';
-            statusText.style.color = currentTurn === 'white' ? '#ffffff' : '#000000';
-            statusText.style.textShadow = currentTurn === 'black' ? '0 0 10px #fff' : 'none';
-        }
+document.getElementById('white-graveyard').innerHTML = capturedByWhite.map(p => <span class="piece black"&gt;${symbols[p]}</span>).join(''); document.getElementById('black-graveyard').innerHTML = capturedByBlack.map(p =&gt;<span class="piece white">${symbols[p]}&lt;/span>).join('');
 
-        // --- 기물별 이동 가능 경로 계산 로직 ---
-        function calculateValidMoves(r, c, piece) {
-            let moves = [];
-            const type = piece.toLowerCase();
-            const color = piece === piece.toUpperCase() ? 'white' : 'black';
-            const dir = color === 'white' ? -1 : 1; // 폰 이동 방향
+const statusEl = document.getElementById('status-text');
+statusEl.innerText = currentTurn === 'white' ? '백(White) 차례' : '흑(Black) 차례';
+statusEl.style.color = currentTurn === 'white' ? '#ffffff' : '#9ca3af';
+}
 
-            const addIfValid = (nr, nc, attackOnly = false, moveOnly = false) => {
-                if (nr < 0 || nr > 7 || nc < 0 || nc > 7) return false; // 맵 밖
-                const target = boardState[nr][nc];
-                if (!target) {
-                    if (!attackOnly) moves.push({r: nr, c: nc, hasEnemy: false});
-                    return true; // 계속 전진 가능 (룩, 비숍 등)
-                }
-                const targetColor = target === target.toUpperCase() ? 'white' : 'black';
-                if (targetColor !== color) {
-                    if (!moveOnly) moves.push({r: nr, c: nc, hasEnemy: true});
-                }
-                return false; // 기물에 막힘
-            };
+function handleCellClick(r, c) {
+if (isGameOver || pendingPromotion) return; // 게임오버 또는 승급 대기중 클릭 방지
 
-            const slide = (dr, dc) => {
-                let nr = r + dr, nc = c + dc;
-                while (addIfValid(nr, nc)) { nr += dr; nc += dc; }
-            };
+const piece = board[r][c];
+const move = validMoves.find(m => m.r === r && m.c === c);
 
-            if (type === 'p') {
-                // 폰 앞으로 (비어있을 때만)
-                if (addIfValid(r + dir, c, false, true)) {
-                    // 첫 이동 2칸 (기본 룰)
-                    if ((color === 'white' && r === 6) || (color === 'black' && r === 1)) {
-                        addIfValid(r + dir * 2, c, false, true);
-                    }
-                }
-                // 폰 대각선 공격
-                addIfValid(r + dir, c - 1, true);
-                addIfValid(r + dir, c + 1, true);
-            } 
-            else if (type === 'n') {
-                // 나이트
-                const jumps = [[-2,-1],[-2,1],[-1,-2],[-1,2],[1,-2],[1,2],[2,-1],[2,1]];
-                jumps.forEach(j => addIfValid(r + j[0], c + j[1]));
-            }
-            else if (type === 'k') {
-                // 킹
-                const steps = [[-1,-1],[-1,0],[-1,1],[0,-1],[0,1],[1,-1],[1,0],[1,1]];
-                steps.forEach(s => addIfValid(r + s[0], c + s[1]));
-            }
-            else {
-                // 룩, 비숍, 퀸
-                if (type === 'r' || type === 'q') {
-                    slide(-1, 0); slide(1, 0); slide(0, -1); slide(0, 1);
-                }
-                if (type === 'b' || type === 'q') {
-                    slide(-1, -1); slide(-1, 1); slide(1, -1); slide(1, 1);
-                }
-            }
-            return moves;
-        }
-    </script>
+if (selectedCell && move) {
+executeMove(selectedCell, {r, c, special: move.special});
+return;
+}
+
+if (piece && piece.color === currentTurn) {
+if (selectedCell && selectedCell.r === r && selectedCell.c === c) {
+selectedCell = null; validMoves = [];
+} else {
+selectedCell = {r, c, piece};
+validMoves = getLegalMoves(r, c);
+}
+updateUI();
+} else {
+selectedCell = null; validMoves = []; updateUI();
+}
+}
+
+function executeMove(from, to) {
+let movingPiece = board[from.r][from.c];
+let targetPiece = board[to.r][to.c];
+let isCapture = false;
+
+if (to.special === 'en_passant') {
+targetPiece = board[from.r][to.c];
+board[from.r][to.c] = null;
+}
+
+if (targetPiece) {
+isCapture = true;
+effectCell = {r: to.r, c: to.c};
+if (currentTurn === 'white') capturedByWhite.push(targetPiece.char);
+else capturedByBlack.push(targetPiece.char);
+} else { effectCell = null; }
+
+board[to.r][to.c] = movingPiece;
+board[from.r][from.c] = null;
+movingPiece.hasMoved = true;
+
+if (to.special === 'castling') {
+if (to.c === 6) {
+board[to.r][5] = board[to.r][7]; board[to.r][7] = null; board[to.r][5].hasMoved = true;
+} else if (to.c === 2) {
+board[to.r][3] = board[to.r][0]; board[to.r][0] = null; board[to.r][3].hasMoved = true;
+}
+}
+
+lastMove = { from: {r: from.r, c: from.c}, to: {r: to.r, c: to.c}, piece: movingPiece };
+selectedCell = null; validMoves = [];
+
+// 프로모션 처리
+if (movingPiece.type === 'p' && (to.r === 0 || to.r === 7)) {
+pendingPromotion = { r: to.r, c: to.c, color: movingPiece.color };
+showPromotionModal(movingPiece.color);
+return; // 프로모션 선택 전까지 턴을 넘기지 않음
+}
+
+finalizeTurn(isCapture);
+}
+
+function finalizeTurn(isCapture) {
+currentTurn = currentTurn === 'white' ? 'black' : 'white';
+checkGameState();
+updateUI();
+if(isCapture) setTimeout(() => { effectCell = null; updateUI(); }, 300);
+}
+
+// --- 프로모션 UI 로직 ---
+function showPromotionModal(color) {
+const modal = document.getElementById('promotion-modal');
+const optionsBox = document.getElementById('promotion-options');
+optionsBox.innerHTML = '';
+
+const pieces = [ {type: 'q', char: 'Q'}, {type: 'r', char: 'R'}, {type: 'b', char: 'B'}, {type: 'n', char: 'N'} ];
+pieces.forEach(p => {
+const btn = document.createElement('div');
+btn.className = promo-btn piece ${color}`;
+btn.innerText = symbols[color === 'white' ? p.char : p.type];
+btn.onclick = () => {
+const target = board[pendingPromotion.r][pendingPromotion.c];
+target.type = p.type;
+target.char = color === 'white' ? p.char : p.type;
+modal.style.display = 'none';
+pendingPromotion = null;
+finalizeTurn(false);
+};
+optionsBox.appendChild(btn);
+});
+modal.style.display = 'flex';
+}
+
+// --- 체스 룰 평가 ---
+function getLegalMoves(r, c) {
+const pseudoMoves = getPseudoMoves(board, r, c);
+return pseudoMoves.filter(move => {
+const tempBoard = JSON.parse(JSON.stringify(board));
+const p = tempBoard[r][c];
+if(move.special === 'en_passant') tempBoard[r][move.c] = null;
+tempBoard[move.r][move.c] = p;
+tempBoard[r][c] = null;
+return !isKingInCheck(tempBoard, p.color);
+});
+}
+
+function getPseudoMoves(b, r, c) {
+const moves = [];
+const p = b[r][c];
+if(!p) return moves;
+const dir = p.color === 'white' ? -1 : 1;
+
+const add = (nr, nc, capOnly=false, moveOnly=false, special=null) => {
+if(nr<0||nr>7||nc<0||nc>7) return false;
+const target = b[nr][nc];
+if(!target) {
+if(!capOnly) moves.push({r: nr, c: nc, capture: false, special});
+return true;
+}
+if(target.color !== p.color) {
+if(!moveOnly) moves.push({r: nr, c: nc, capture: true, special});
+}
+return false;
+};
+const slide = (dr, dc) => { let nr=r+dr, nc=c+dc; while(add(nr, nc)) { nr+=dr; nc+=dc; } };
+
+if(p.type === 'p') {
+if(add(r+dir, c, false, true)) {
+if(!p.hasMoved) add(r+dir*2, c, false, true);
+}
+add(r+dir, c-1, true); add(r+dir, c+1, true);
+if(lastMove && lastMove.piece.type === 'p' && Math.abs(lastMove.from.r - lastMove.to.r) === 2) {
+if(lastMove.to.r === r && Math.abs(lastMove.to.c - c) === 1) {
+moves.push({r: r+dir, c: lastMove.to.c, capture: true, special: 'en_passant'});
+}
+}
+}
+else if(p.type === 'n') [[-2,-1],[-2,1],[-1,-2],[-1,2],[1,-2],[1,2],[2,-1],[2,1]].forEach(j=>add(r+j[0],c+j[1]));
+else if(p.type === 'k') {
+[[-1,-1],[-1,0],[-1,1],[0,-1],[0,1],[1,-1],[1,0],[1,1]].forEach(s=>add(r+s[0],c+s[1]));
+// 캐슬링 (수정됨: 킹이 체크가 아닐 때, 통과하는 경로도 공격받지 않아야 함)
+if(!p.hasMoved && !isKingInCheck(b, p.color)) {
+// 공격받는 칸인지 확인하는 함수
+const isSquareAttacked = (sqR, sqC) => {
+let temp = JSON.parse(JSON.stringify(b));
+temp[sqR][sqC] = {type: 'k', color: p.color, char: p.char};
+return isKingInCheck(temp, p.color);
+};
+
+if(b[r][7] && b[r][7].type==='r' && !b[r][7].hasMoved && !b[r][5] && !b[r][6]) {
+if(!isSquareAttacked(r, 5) && !isSquareAttacked(r, 6))
+moves.push({r, c:6, capture:false, special:'castling'});
+}
+if(b[r][0] && b[r][0].type==='r' && !b[r][0].hasMoved && !b[r][1] && !b[r][2] && !b[r][3]) {
+if(!isSquareAttacked(r, 2) && !isSquareAttacked(r, 3))
+moves.push({r, c:2, capture:false, special:'castling'});
+}
+}
+}
+else {
+if(p.type==='r'||p.type==='q') { slide(-1,0); slide(1,0); slide(0,-1); slide(0,1); }
+if(p.type==='b'||p.type==='q') { slide(-1,-1); slide(-1,1); slide(1,-1); slide(1,1); }
+}
+return moves;
+}
+
+function isKingInCheck(b, color) {
+let kingPos = null;
+for(let r=0; r<8; r++) for(let c=0; c<8; c++)
+if(b[r][c] && b[r][c].type === 'k' && b[r][c].color === color) kingPos = {r, c};
+
+if(!kingPos) return false;
+
+const enemyColor = color === 'white' ? 'black' : 'white';
+for(let r=0; r<8; r++) {
+for(let c=0; c<8; c++) {
+if(b[r][c] && b[r][c].color === enemyColor) {
+const pMoves = getPseudoMoves(b, r, c);
+if(pMoves.find(m => m.r === kingPos.r && m.c === kingPos.c)) return true;
+}
+}
+}
+return false;
+}
+
+function checkGameState() {
+let hasAnyMove = false;
+for(let r=0; r<8; r++) {
+for(let c=0; c<8; c++) {
+if(board[r][c] && board[r][c].color === currentTurn) {
+if(getLegalMoves(r, c).length > 0) hasAnyMove = true;
+}
+}
+}
+
+const alertEl = document.getElementById('alert-message');
+if (isKingInCheck(board, currentTurn)) {
+if (!hasAnyMove) {
+alertEl.innerText = "CHECKMATE! 게임 종료";
+isGameOver = true;
+setTimeout(() => alert(``${currentTurn === 'white' ? '흑(Black)' : '백(White)'} 승리! (체크메이트)`), 100);
+} else {
+alertEl.innerText = "CHECK! (체크)";
+}
+} else {
+if (!hasAnyMove) {
+alertEl.innerText = "STALEMATE! (무승부)";
+isGameOver = true;
+setTimeout(() => alert("무승부! (스테일메이트 - 움직일 기물이 없습니다.)"), 100);
+} else {
+alertEl.innerText = "";
+}
+}
+}
+</script>
 </body>
 </html>
